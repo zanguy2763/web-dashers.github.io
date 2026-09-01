@@ -425,6 +425,7 @@ class PlayerObject {
     this._lastCameraY = 0;
     this._dashAnimationFrame = 0;
     this._dashAnimationTimer = 0;
+    this._dashTrailProgress = 0;
     this._dashAnimationSprite = null;
     this._spiderDashEffectSprite = null;
     this._spiderDashEffectTimer = 0;
@@ -1357,8 +1358,12 @@ class PlayerObject {
     this._dashAnimationSprite = spriteY.add.image(particleY, spriteX, "GJ_GameSheetGlow", "playerDash2_001.png");
     this._dashAnimationSprite.setDepth(7);
     this._dashAnimationSprite.setVisible(false);
-    this._dashAnimationSprite.setTint(0xffffff);
     this._dashAnimationSprite.setBlendMode('ADD');
+    this._dashGlowSprite = spriteY.add.image(particleY, spriteX, "GJ_GameSheetGlow", "playerDash2_001.png");
+    this._dashGlowSprite.setDepth(6.5);
+    this._dashGlowSprite.setVisible(false);
+    this._dashGlowSprite.setBlendMode('ADD');
+    this._dashGlowSprite.setAlpha(0.6);
     this._spiderDashEffectSprite = null;
     if (_textureHasFrameSafe(spriteY, "GJ_GameSheet04", "spiderDash_001.png")) {
       this._spiderDashEffectSprite = spriteY.add.image(particleY, spriteX, "GJ_GameSheet04", "spiderDash_001.png");
@@ -1379,25 +1384,40 @@ class PlayerObject {
   }
   _updateDashAnimation(deltaTime) {
     if (this._scene?._editorPlaytestActive) {
-      if (this._dashAnimationSprite) this._dashAnimationSprite.setVisible(false);
+      this._setDashAnimationVisible(false);
       return;
     }
 
     if (!this._dashAnimationSprite) return;
     if (this.p.isDashing) {
-      this._dashAnimationSprite.setVisible(true);
+      this._setDashAnimationVisible(true);
+      this._dashTrailProgress = Math.min(1, this._dashTrailProgress + deltaTime / 60);
+      this._setDashTrailTint(_mixColors(0xffffff, this._primaryColor(), this._dashTrailProgress));
       this._dashAnimationTimer += deltaTime;
       if (this._dashAnimationTimer >= 16.67) {
         this._dashAnimationTimer = 0;
         this._dashAnimationFrame = (this._dashAnimationFrame % 12) + 1;
         const frameName = `playerDash2_${String(this._dashAnimationFrame).padStart(3, '0')}.png`;
-        this._dashAnimationSprite.setFrame(frameName);
+        this._setDashAnimationFrame(frameName);
       }
     } else {
-      this._dashAnimationSprite.setVisible(false);
+      this._setDashAnimationVisible(false);
+      this._dashTrailProgress = 0;
       this._dashAnimationFrame = 0;
       this._dashAnimationTimer = 0;
     }
+  }
+  _setDashAnimationVisible(visible) {
+    if (this._dashAnimationSprite) this._dashAnimationSprite.setVisible(visible);
+    if (this._dashGlowSprite) this._dashGlowSprite.setVisible(visible);
+  }
+  _setDashTrailTint(color) {
+    if (this._dashAnimationSprite) this._dashAnimationSprite.setTint(color);
+    if (this._dashGlowSprite) this._dashGlowSprite.setTint(color);
+  }
+  _setDashAnimationFrame(frameName) {
+    if (this._dashAnimationSprite && this._dashAnimationSprite.visible) this._dashAnimationSprite.setFrame(frameName);
+    if (this._dashGlowSprite && this._dashGlowSprite.visible) this._dashGlowSprite.setFrame(frameName);
   }
   _initParticles(scene) {
     this._particleEmitter = scene.add.particles(0, 0, "GJ_WebSheet", {
@@ -1977,6 +1997,13 @@ if (this.p.isFlying || this.p.isUfo) {
       this._dashAnimationSprite.scaleY = this.p.gravityFlipped ? -_miniS : _miniS;
       this._dashAnimationSprite.scaleX = _miniS;
     }
+    if (this._dashGlowSprite && this._dashGlowSprite.visible) {
+      this._dashGlowSprite.x = _0x7f0705;
+      this._dashGlowSprite.y = _0x1a433c;
+      const _miniGlowS = this.p.isMini ? 0.6 : 1;
+      this._dashGlowSprite.scaleX = _miniGlowS;
+      this._dashGlowSprite.scaleY = _miniGlowS;
+    }
 
     if (!this._scene._slideIn){
       if (window.showHitboxes || this.p.isDead && window.hitboxesOnDeath) {
@@ -2503,7 +2530,7 @@ if (this.p.isFlying || this.p.isUfo) {
       this.setBirdVisible(false);
       this.setSpiderVisible(false);
       this.setRobotVisible(false);
-      if (this._dashAnimationSprite) this._dashAnimationSprite.setVisible(false);
+      this._setDashAnimationVisible(false);
       return;
     }
 
@@ -5310,7 +5337,7 @@ if (this.p.isFlying || this.p.isUfo) {
     this._shipDragEmitter.stop();
     this.p.isDashing = false;
     this.p.dashYVelocity = 0;
-    if (this._dashAnimationSprite) this._dashAnimationSprite.setVisible(false);
+    this._setDashAnimationVisible(false);
     this._dashAnimationFrame = 0;
     this._dashAnimationTimer = 0;
     if (this._spiderDashEffectSprite) this._spiderDashEffectSprite.setVisible(false);
@@ -5473,7 +5500,7 @@ if (this.p.isFlying || this.p.isUfo) {
     this._flyParticle2Active = false;
     this._shipDragEmitter.stop();
     this._shipDragActive = false;
-    if (this._dashAnimationSprite) this._dashAnimationSprite.setVisible(false);
+    this._setDashAnimationVisible(false);
     this._dashAnimationFrame = 0;
     this._dashAnimationTimer = 0;
     if (this._spiderDashEffectSprite) this._spiderDashEffectSprite.setVisible(false);
