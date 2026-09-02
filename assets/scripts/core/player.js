@@ -425,7 +425,6 @@ class PlayerObject {
     this._lastCameraY = 0;
     this._dashAnimationFrame = 0;
     this._dashAnimationTimer = 0;
-    this._dashTrailProgress = 0;
     this._dashAnimationSprite = null;
     this._spiderDashEffectSprite = null;
     this._spiderDashEffectTimer = 0;
@@ -1391,8 +1390,7 @@ class PlayerObject {
     if (!this._dashAnimationSprite) return;
     if (this.p.isDashing) {
       this._setDashAnimationVisible(true);
-      this._dashTrailProgress = Math.min(1, this._dashTrailProgress + deltaTime / 60);
-      this._setDashTrailTint(_mixColors(0xffffff, this._primaryColor(), this._dashTrailProgress));
+      this._setDashTrailTint(this._secondaryColor());
       this._dashAnimationTimer += deltaTime;
       if (this._dashAnimationTimer >= 16.67) {
         this._dashAnimationTimer = 0;
@@ -1402,7 +1400,6 @@ class PlayerObject {
       }
     } else {
       this._setDashAnimationVisible(false);
-      this._dashTrailProgress = 0;
       this._dashAnimationFrame = 0;
       this._dashAnimationTimer = 0;
     }
